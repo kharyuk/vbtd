@@ -43,7 +43,26 @@ def downloadSMNI(save_data_dirname=None, remove_archive=False):
     urllib.request.urlretrieve(_smni_url, path)
     #print(path)
     with tarfile.open(path) as f:
-        f.extractall(save_data_dirname)
+        def is_within_directory(directory, target):
+            
+            abs_directory = os.path.abspath(directory)
+            abs_target = os.path.abspath(target)
+        
+            prefix = os.path.commonprefix([abs_directory, abs_target])
+            
+            return prefix == abs_directory
+        
+        def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+        
+            for member in tar.getmembers():
+                member_path = os.path.join(path, member.name)
+                if not is_within_directory(path, member_path):
+                    raise Exception("Attempted Path Traversal in Tar File")
+        
+            tar.extractall(path, members, numeric_owner=numeric_owner) 
+            
+        
+        safe_extract(f, save_data_dirname)
     if remove_archive:
         os.remove(os.path.join(save_data_dirname, save_data_filename))
     fnms = os.listdir(save_data_dirname)
@@ -56,7 +75,26 @@ def downloadSMNI(save_data_dirname=None, remove_archive=False):
         subpath = os.path.join(save_data_dirname, subdirname)
         #os.mkdir(subpath)
         with tarfile.open(os.path.join(save_data_dirname, fnm), 'r:gz') as f: #, ) as f:
-            f.extractall(save_data_dirname)
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(f, save_data_dirname)
         os.remove(os.path.join(save_data_dirname, fnm))
         subfnms = os.listdir(subpath)
         for subfnm in subfnms:

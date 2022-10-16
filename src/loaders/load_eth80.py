@@ -16,7 +16,26 @@ def downloadETH80(save_data_dirname=''):
     save_data_filename = 'eth80-cropped-close128.tgz'
     _urllib.urlretrieve(url, save_data_dirname+save_data_filename)
     with _tarfile.open(save_data_dirname+save_data_filename, 'r:gz') as f:
-        f.extractall(save_data_dirname)
+        def is_within_directory(directory, target):
+            
+            abs_directory = os.path.abspath(directory)
+            abs_target = os.path.abspath(target)
+        
+            prefix = os.path.commonprefix([abs_directory, abs_target])
+            
+            return prefix == abs_directory
+        
+        def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+        
+            for member in tar.getmembers():
+                member_path = os.path.join(path, member.name)
+                if not is_within_directory(path, member_path):
+                    raise Exception("Attempted Path Traversal in Tar File")
+        
+            tar.extractall(path, members, numeric_owner=numeric_owner) 
+            
+        
+        safe_extract(f, save_data_dirname)
         
 def buildNpzETH80(data_filename, data_dirname='', resizeValue=None):
     Nobjects = 10 # fixed values
